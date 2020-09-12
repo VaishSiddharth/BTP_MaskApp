@@ -13,9 +13,10 @@ public class OpenCameraForVerify extends AppCompatActivity {
         setContentView(R.layout.activity_open_camera_for_verify);
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.container, VerifyCameraFragment.newInstance())
+                .replace(R.id.container, Camera2BasicFragment.newInstance())
                 .commit();
     }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
