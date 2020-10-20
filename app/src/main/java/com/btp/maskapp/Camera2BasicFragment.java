@@ -67,9 +67,8 @@ import androidx.fragment.app.Fragment;
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
+//import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
@@ -93,6 +92,13 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
 
 import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
 
@@ -444,9 +450,14 @@ public class Camera2BasicFragment extends Fragment
         return new Camera2BasicFragment();
     }
 
+    private WebSocket ws = null;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Request request = new Request.Builder().url("ws://34.122.174.219/ws/mask/").build();
+        EchoWebSocketListener listener = new EchoWebSocketListener();
+        ws = client.newWebSocket(request, listener);
         return inflater.inflate(R.layout.fragment_camera2_video, container, false);
     }
 
@@ -945,6 +956,46 @@ public class Camera2BasicFragment extends Fragment
         }
     }
 
+    String sendImageBase64 = "qwertyuiopasdfghjklzxc";
+
+    private final class EchoWebSocketListener extends WebSocketListener {
+        private static final int NORMAL_CLOSURE_STATUS = 1000;
+
+        @Override
+        public void onOpen(WebSocket webSocket, Response response) {
+//            webSocket.send(sendImageBase64);
+//            webSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
+        }
+
+        @Override
+        public void onMessage(WebSocket webSocket, String text) {
+            System.out.println("Receiving : " + text);
+            if (text.contains("true")) {
+                startActivity(new Intent(getContext(), MaskDetected.class));
+            } else {
+                startActivity(new Intent(getContext(), MaskNotDetected.class));
+            }
+        }
+
+        @Override
+        public void onMessage(WebSocket webSocket, ByteString bytes) {
+            System.out.println("Receiving bytes : " + bytes.hex());
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            System.out.println("Closing : " + code + " / " + reason);
+        }
+
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            System.out.println("Error : " + t.getMessage());
+        }
+    }
+
+    OkHttpClient client = new OkHttpClient();
+
     //Send Resquest to server
 
     public void sendRequest(StringBuilder encodedImage) {
@@ -957,12 +1008,12 @@ public class Camera2BasicFragment extends Fragment
 
             final String requestBody = jsonBody.toString();
 
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            StringRequest stringRequest = new StringRequest(com.android.volley.Request.Method.POST, url, new com.android.volley.Response.Listener<String>() {
                 @Override
                 public void onResponse(String response) {
                     Log.e("VOLLEY", response);
                 }
-            }, new Response.ErrorListener() {
+            }, new com.android.volley.Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.e("VOLLEY", error.toString());
@@ -984,7 +1035,7 @@ public class Camera2BasicFragment extends Fragment
                 }
 
                 @Override
-                protected Response<String> parseNetworkResponse(NetworkResponse response) {
+                protected com.android.volley.Response<String> parseNetworkResponse(NetworkResponse response) {
                     String responseString = "";
                     if (response != null) {
                         responseString = String.valueOf(response.statusCode);
@@ -996,7 +1047,7 @@ public class Camera2BasicFragment extends Fragment
                         }
                         // can get more details such as response.headers
                     }
-                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+                    return com.android.volley.Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
                 }
             };
             stringRequest.setRetryPolicy(new DefaultRetryPolicy(
@@ -1038,6 +1089,11 @@ public class Camera2BasicFragment extends Fragment
         @Override
         public void run() {
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
+//            for(int i=0;i<buffer.remaining();i++)
+//            {
+//                System.out.print(buffer.get(i));
+//                ws.send(String.valueOf(buffer.get(i)));
+//            }
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
             FileOutputStream output = null;
@@ -1047,7 +1103,7 @@ public class Camera2BasicFragment extends Fragment
                 //Base64.encodeToString for sending to server
                 Bitmap bm = BitmapFactory.decodeFile(mFile.getAbsolutePath());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); // bm is the bitmap object
+                bm.compress(Bitmap.CompressFormat.WEBP, 5, baos); // bm is the bitmap object
                 byte[] b = baos.toByteArray();
                 final StringBuilder encodedImage = new StringBuilder(Base64.encodeToString(b, Base64.DEFAULT));
                 System.out.println("HERRRRRRRRRREEEEEEEEEEE " + encodedImage);
@@ -1057,7 +1113,12 @@ public class Camera2BasicFragment extends Fragment
                     @Override
                     public void run() {
                         //do work
-                        sendRequest(encodedImage);
+//                        Request request = new Request.Builder().url("ws://34.122.174.219/ws/mask/").build();
+//                        EchoWebSocketListener listener = new EchoWebSocketListener();
+//                        WebSocket ws = client.newWebSocket(request, listener);
+                        sendImageBase64 = sendImageBase64 + encodedImage;
+                        ws.send(sendImageBase64);
+//                        sendRequest(encodedImage);
                     }
                 });
 

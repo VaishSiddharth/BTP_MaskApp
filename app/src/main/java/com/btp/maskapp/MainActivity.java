@@ -51,12 +51,15 @@ public class MainActivity extends AppCompatActivity {
 
                         OutputStream outputStream = bluetoothSocket.getOutputStream();
 
-                        while (true) {
+                        while (bluetoothSocket.isConnected()) {
                             InputStream inputStream = bluetoothSocket.getInputStream();
                             inputStream.skip(inputStream.available());
                             byte b = (byte) inputStream.read();
                             if ((char) b == '0') {
                                 outputStream.write(48);
+                                bluetoothSocket.close();
+                                startActivity(new Intent(getApplicationContext(), OpenCameraForVerify.class));
+                                break;
                             }
                             System.out.println((char) b);
                         }
@@ -65,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 }
-                while (!bluetoothSocket.isConnected() && bluetoothConnectRetry < 3);
+                while (false);
 
             }
         });
