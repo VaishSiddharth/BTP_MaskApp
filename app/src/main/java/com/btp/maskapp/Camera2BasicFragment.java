@@ -455,7 +455,7 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Request request = new Request.Builder().url("ws://34.70.70.70/ws/mask/").build();
+        Request request = new Request.Builder().url("ws://bcf99418a9b0.ngrok.io/ws/mask/").build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         ws = client.newWebSocket(request, listener);
         return inflater.inflate(R.layout.fragment_camera2_video, container, false);
