@@ -455,7 +455,7 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Request request = new Request.Builder().url("ws://34.122.174.219/ws/mask/").build();
+        Request request = new Request.Builder().url("ws://34.70.70.70/ws/mask/").build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         ws = client.newWebSocket(request, listener);
         return inflater.inflate(R.layout.fragment_camera2_video, container, false);
@@ -1098,12 +1098,13 @@ public class Camera2BasicFragment extends Fragment
             buffer.get(bytes);
             FileOutputStream output = null;
             try {
-                output = new FileOutputStream(mFile);
-                output.write(bytes);
+//                output = new FileOutputStream(mFile);
+//                output.write(bytes);
                 //Base64.encodeToString for sending to server
-                Bitmap bm = BitmapFactory.decodeFile(mFile.getAbsolutePath());
+                Bitmap bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                bm = Bitmap.createScaledBitmap(bm, 480, 640, false);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bm.compress(Bitmap.CompressFormat.WEBP, 5, baos); // bm is the bitmap object
+                bm.compress(Bitmap.CompressFormat.WEBP, 10, baos); // bm is the bitmap object
                 byte[] b = baos.toByteArray();
                 final StringBuilder encodedImage = new StringBuilder(Base64.encodeToString(b, Base64.DEFAULT));
                 System.out.println("HERRRRRRRRRREEEEEEEEEEE " + encodedImage);
@@ -1123,7 +1124,7 @@ public class Camera2BasicFragment extends Fragment
                 });
 
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 mImage.close();
